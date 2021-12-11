@@ -1,9 +1,9 @@
 import './App.css';
-
+import WhiteBoard from './whiteboard/WhiteBoard';
 function App() {
   return (
     <div id="main"> 
-      This is a test...
+     <WhiteBoard />
     </div>
   );
 }
