@@ -1,0 +1,18 @@
+{
+  "short_name": "Chromeboard",
+  "name": "Chrome white board",
+  "version": "1.0.0",
+  "manifest_version": 2,
+  "browser_action": {
+    "default_popup": "chromeboard/build/index.html"
+  },
+  "permissions": [
+    "storage",
+    "tabs",
+    "activeTab",
+    "http://*/*", 
+    "https://*/*"
+  ],
+  "icons": {
+  }
+}
