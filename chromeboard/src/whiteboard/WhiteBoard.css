@@ -1,5 +1,9 @@
 #board {
-    height:400px;
-    width:400px;
-    background-color: aqua;
+    width: inherit;
+    height: inherit;
+}
+.myCanvas {
+    width: inherit;
+    height: inherit;
+    border: 1px solid #000000;
 }
