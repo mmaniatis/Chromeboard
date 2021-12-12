@@ -35,8 +35,10 @@ class WhiteBoard extends Component {
     }
 
     start(event: any) {
+        
         document.addEventListener("mousemove", this.draw);
-        this.reposition(event)
+        this.reposition(event);
+        this.draw(event);
     }
 
     stop() {
