@@ -1,5 +1,5 @@
 .myCanvas {
-    border: 1px solid #000000;
-    overflow: hidden;
-    text-align: center;
+    /* overflow: auto; */
+    resize: both;
+    /* Max height / width of a chrome extension */
 }
