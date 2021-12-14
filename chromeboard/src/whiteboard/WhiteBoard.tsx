@@ -6,7 +6,6 @@ class WhiteBoard extends Component {
     ctx = {} as any; //CanvasRenderingContext2D
     coord = {x:0, y:0};
     paint = false;
-    width = 400;
     height = 350;
 
     constructor(props: any) {
@@ -18,35 +17,43 @@ class WhiteBoard extends Component {
         this.draw = this.draw.bind(this);
         this.stop = this.stop.bind(this);
         this.resize = this.resize.bind(this);
+        this.increaseCanvasSize = this.increaseCanvasSize.bind(this);
+        this.decreaseCanvasSize = this.decreaseCanvasSize.bind(this);
     } 
 
     componentDidMount() {
         this.canvas = document.querySelector('.myCanvas') as HTMLCanvasElement;
         this.ctx = this.canvas.getContext('2d');
         document.addEventListener("mousedown", this.start);
-        document.addEventListener("keyup", event => {
-            if (event.code == "Space") {
-                this.increase(event);
-            }
-        });
         document.addEventListener("mouseup", this.stop);
-        // window.addEventListener("resize", this.resize);
+        window.addEventListener("resize", this.resize);
+        this.resize()
     }
 
     componentWillUnmount() {
     }
 
-    increase(event: any) {
-        if(this.width < 800 && this.height < 600) {
-            this.width += 100;
-            this.height += 50;
+    increaseCanvasSize(event: any) {
+        if(this.ctx.canvas.width < 800 && this.height < 600) {
+            chrome.storage.sync.set({'canvasWidth': this.ctx.canvas.width + 100});
             this.resize();
         }
     }
+    
+    decreaseCanvasSize(event: any) {
+        
+    }
 
     resize() {
-        this.ctx.canvas.width = this.width;
+        let self = this;        
+        chrome.storage.sync.get('canvasWidth', function(item) {
+            self.onGetCanvasWidth(item['canvasWidth'] == null ? 400 : item['canvasWidth']);
+        });
         this.ctx.canvas.height = this.height;
+    }
+
+    onGetCanvasWidth(item:any) {
+        this.ctx.canvas.width = item;
     }
 
     start(event: any) {
@@ -75,8 +82,13 @@ class WhiteBoard extends Component {
     }
 
     render() { 
-        return <canvas className="myCanvas">
-                </canvas>
+        return <>
+            <div className = "TaskBar">
+                <button onClick={this.increaseCanvasSize}></button>
+            </div> 
+            <canvas className="myCanvas">
+            </canvas>
+        </>
             
     }
 }
