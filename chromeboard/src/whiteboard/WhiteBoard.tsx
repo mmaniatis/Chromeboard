@@ -6,6 +6,7 @@ class WhiteBoard extends Component {
     ctx = {} as any; //CanvasRenderingContext2D
     coord = {x:0, y:0};
     paint = false;
+    eraseFlag = false;
 
     constructor(props: any) {
         super(props)
@@ -14,6 +15,9 @@ class WhiteBoard extends Component {
         this.start = this.start.bind(this);
         this.reposition = this.reposition.bind(this);
         this.draw = this.draw.bind(this);
+        this.erase = this.erase.bind(this);
+        this.toggleEraseFlag= this.toggleEraseFlag.bind(this);
+        this.stroke = this.stroke.bind(this);
         this.stop = this.stop.bind(this);
         this.resize = this.resize.bind(this);
         this.increaseCanvasSize = this.increaseCanvasSize.bind(this);
@@ -69,13 +73,21 @@ class WhiteBoard extends Component {
     }
 
     start(event: any) {
-        document.addEventListener("mousemove", this.draw);
-        this.reposition(event);
-        this.draw(event);
+        if(this.eraseFlag) {
+            document.addEventListener("mousemove", this.erase);
+            this.reposition(event);
+            this.erase(event);
+        }
+        else {
+            document.addEventListener("mousemove", this.draw);
+            this.reposition(event);
+            this.draw(event);
+        }
     }
 
     stop() {
         document.removeEventListener("mousemove", this.draw);
+        document.removeEventListener("mousemove", this.erase);
     }
     
     reposition(event: any):void {
@@ -87,17 +99,35 @@ class WhiteBoard extends Component {
         this.ctx.beginPath();
         this.ctx.lineWidth = 1.5;
         this.ctx.lineCap = "round";
+        this.stroke(event) 
+    }
+
+    //TODO: this does not work. Need to change color to be white for erase I think.
+    erase(event:any) {
+        this.ctx.beginPath();
+        this.ctx.lineWidth = 10;
+        this.ctx.lineCap = "round";
+        this.stroke(event);
+    }
+
+    stroke(event: any) {
         this.ctx.moveTo(this.coord.x, this.coord.y);
         this.reposition(event);
         this.ctx.lineTo(this.coord.x, this.coord.y);
         this.ctx.stroke();
     }
 
+    toggleEraseFlag() {
+        this.eraseFlag = !this.eraseFlag;
+    }
+    
     render() { 
         return <>
             <div className = "TaskBar">
-                <button onClick={this.increaseCanvasSize}></button>
-                <button onClick={this.decreaseCanvasSize}></button>
+                <button className="canvasButton" onClick={this.increaseCanvasSize}>+</button>
+                <button className="canvasButton" onClick={this.decreaseCanvasSize}>-</button>
+                <button className="canvasButton" onClick={this.toggleEraseFlag}>E</button>
+                {/* <button className="canvasButton" onClick={this.toggleEraseFlag}>D</button> */}
             </div> 
             <canvas className="myCanvas">
             </canvas>
