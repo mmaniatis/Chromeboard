@@ -16,7 +16,8 @@ class WhiteBoard extends Component {
         this.reposition = this.reposition.bind(this);
         this.draw = this.draw.bind(this);
         this.erase = this.erase.bind(this);
-        this.toggleEraseFlag= this.toggleEraseFlag.bind(this);
+        this.turnOnErase= this.turnOnErase.bind(this);
+        this.turnOnWrite= this.turnOnWrite.bind(this);
         this.stroke = this.stroke.bind(this);
         this.stop = this.stop.bind(this);
         this.resize = this.resize.bind(this);
@@ -97,15 +98,16 @@ class WhiteBoard extends Component {
 
     draw(event: any) {
         this.ctx.beginPath();
+        this.ctx.strokeStyle = "black";
         this.ctx.lineWidth = 1.5;
         this.ctx.lineCap = "round";
         this.stroke(event) 
     }
 
-    //TODO: this does not work. Need to change color to be white for erase I think.
     erase(event:any) {
         this.ctx.beginPath();
-        this.ctx.lineWidth = 10;
+        this.ctx.strokeStyle = "white";
+        this.ctx.lineWidth = 40;
         this.ctx.lineCap = "round";
         this.stroke(event);
     }
@@ -117,17 +119,21 @@ class WhiteBoard extends Component {
         this.ctx.stroke();
     }
 
-    toggleEraseFlag() {
-        this.eraseFlag = !this.eraseFlag;
+    turnOnErase() {
+        this.eraseFlag = true;
+    } 
+
+    turnOnWrite() {
+        this.eraseFlag = false;
     }
-    
+
     render() { 
         return <>
             <div className = "TaskBar">
                 <button className="canvasButton" onClick={this.increaseCanvasSize}>+</button>
                 <button className="canvasButton" onClick={this.decreaseCanvasSize}>-</button>
-                <button className="canvasButton" onClick={this.toggleEraseFlag}>E</button>
-                {/* <button className="canvasButton" onClick={this.toggleEraseFlag}>D</button> */}
+                <button className="canvasButton" onClick={this.turnOnErase}>E</button>
+                <button className="canvasButton" onClick={this.turnOnWrite}>W</button>
             </div> 
             <canvas className="myCanvas">
             </canvas>
