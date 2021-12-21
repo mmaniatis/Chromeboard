@@ -1,5 +1,5 @@
-.myCanvas {
-    /* overflow: auto; */
-    resize: both;
-    /* Max height / width of a chrome extension */
+.canvasButton {
+    width: 20px;
+    text-align: center;
+    /* TODO: Fix text align to be center */
 }
