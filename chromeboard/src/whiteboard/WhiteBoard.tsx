@@ -39,16 +39,16 @@ class WhiteBoard extends Component {
 
     increaseCanvasSize() {
         if(this.ctx.canvas.width < 800 && this.ctx.canvas.height < 600) {
-            chrome.storage.sync.set({'canvasWidth': this.ctx.canvas.width + 100});
-            chrome.storage.sync.set({'canvasHeight': this.ctx.canvas.height + 50});
+            chrome.storage.local.set({'canvasWidth': this.ctx.canvas.width + 100});
+            chrome.storage.local.set({'canvasHeight': this.ctx.canvas.height + 50});
             this.resize();
         }
     }
     
     decreaseCanvasSize() {
        if(this.ctx.canvas.width > 400 && this.ctx.canvas.height > 350) {
-            chrome.storage.sync.set({'canvasWidth' : this.canvas.width - 100});
-            chrome.storage.sync.set({'canvasHeight' : this.canvas.height - 50});
+            chrome.storage.local.set({'canvasWidth' : this.canvas.width - 100});
+            chrome.storage.local.set({'canvasHeight' : this.canvas.height - 50});
             this.resize(); 
         }
     }
@@ -56,11 +56,11 @@ class WhiteBoard extends Component {
     resize() {
         let self = this;        
     
-        chrome.storage.sync.get('canvasWidth', function(item) {
+        chrome.storage.local.get('canvasWidth', function(item) {
             self.onGetCanvasWidth(item['canvasWidth'] == null ? 400 : item['canvasWidth']);
         });
         
-        chrome.storage.sync.get('canvasHeight', function(item) {
+        chrome.storage.local.get('canvasHeight', function(item) {
             self.onGetCanvasHeight(item['canvasHeight'] == null ? 350 : item['canvasHeight']);
         });
 
