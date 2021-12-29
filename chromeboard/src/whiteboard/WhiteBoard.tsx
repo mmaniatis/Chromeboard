@@ -7,8 +7,6 @@ class WhiteBoard extends Component {
     coord = {x:0, y:0};
     paint = false;
     eraseFlag = false;
-    boardState = []
-    stateIndex = 0;
 
     constructor(props: any) {
         super(props)
@@ -39,10 +37,7 @@ class WhiteBoard extends Component {
         this.resize();
     }
 
-    componentWillUnmount() {
-    }
-
-    increaseCanvasSize(event: any) {
+    increaseCanvasSize() {
         if(this.ctx.canvas.width < 800 && this.ctx.canvas.height < 600) {
             chrome.storage.sync.set({'canvasWidth': this.ctx.canvas.width + 100});
             chrome.storage.sync.set({'canvasHeight': this.ctx.canvas.height + 50});
@@ -50,17 +45,17 @@ class WhiteBoard extends Component {
         }
     }
     
-    decreaseCanvasSize(event: any) {
+    decreaseCanvasSize() {
        if(this.ctx.canvas.width > 400 && this.ctx.canvas.height > 350) {
             chrome.storage.sync.set({'canvasWidth' : this.canvas.width - 100});
             chrome.storage.sync.set({'canvasHeight' : this.canvas.height - 50});
             this.resize(); 
         }
-        
     }
 
     resize() {
         let self = this;        
+    
         chrome.storage.sync.get('canvasWidth', function(item) {
             self.onGetCanvasWidth(item['canvasWidth'] == null ? 400 : item['canvasWidth']);
         });
@@ -69,21 +64,21 @@ class WhiteBoard extends Component {
             self.onGetCanvasHeight(item['canvasHeight'] == null ? 350 : item['canvasHeight']);
         });
 
-        chrome.storage.sync.get('canvasState', function(item) {
+        chrome.storage.local.get('canvasState', function(item) {
             self.onGetCanvasState(item['canvasState']);
         });
     }
 
     onGetCanvasState(item: any) {
         let self = this;
-        console.log("Inside onGetCanvasState");
-        console.log("Item: " + item);
+        console.log("Retrieving: " + item);
+        // window.open(item);
         if(item == null) return;
-
+        
         let image = new Image();
         image.src = item;
         image.onload = function () {
-            self.ctx.drawImage(image, 0, 0);
+            self.ctx.drawImage(image, 0, 0); //TODO: Look into what draw image takes. I think bug may be related to the resizing of the window.
         }
     }
 
@@ -101,6 +96,7 @@ class WhiteBoard extends Component {
             this.reposition(event);
             this.erase(event);
         }
+        
         else {
             document.addEventListener("mousemove", this.draw);
             this.reposition(event);
@@ -150,8 +146,13 @@ class WhiteBoard extends Component {
     }
 
     saveState() {
-        console.log("Inside saveState...");
-        chrome.storage.sync.set({'canvasState' : this.canvas.toDataURL()}); 
+        chrome.storage.local.remove(["canvasState"],function() {
+            var error = chrome.runtime.lastError;
+               if (error) {
+                   console.error(error);
+               }
+           })
+        chrome.storage.local.set({'canvasState' : this.canvas.toDataURL()}); 
     }
 
     render() { 
