@@ -1,4 +1,4 @@
-import React, { Component} from 'react';
+import { Component} from 'react';
 import './WhiteBoard.css'
 
 class WhiteBoard extends Component {
@@ -7,6 +7,10 @@ class WhiteBoard extends Component {
     coord = {x:0, y:0};
     paint = false;
     eraseFlag = false;
+    minHeight = 350;
+    maxHeight = 600;
+    minWidth = 400;
+    maxWidth = 800;    
 
     constructor(props: any) {
         super(props)
@@ -32,19 +36,24 @@ class WhiteBoard extends Component {
         var self = this;
         this.canvas = document.querySelector('.myCanvas') as HTMLCanvasElement;
         this.ctx = this.canvas.getContext('2d');
+        
         document.addEventListener("mousedown", this.start);
+        
         document.addEventListener("mouseup", this.saveState);
+
         document.addEventListener("mouseup", this.stop);
+
         document.addEventListener("keydown", function(event) {
             if((event.metaKey || event.ctrlKey) && event.key == 'z') {
                 self.undo();
             }
         });
+
         this.resize();
     }
 
     increaseCanvasSize() {
-        if(this.ctx.canvas.width < 800 && this.ctx.canvas.height < 600) {
+        if(this.ctx.canvas.width < this.maxWidth && this.ctx.canvas.height < this.maxHeight) {
             chrome.storage.local.set({'canvasWidth': this.ctx.canvas.width + 100});
             chrome.storage.local.set({'canvasHeight': this.ctx.canvas.height + 50});
             this.resize();
@@ -52,7 +61,7 @@ class WhiteBoard extends Component {
     }
     
     decreaseCanvasSize() {
-       if(this.ctx.canvas.width > 400 && this.ctx.canvas.height > 350) {
+       if(this.ctx.canvas.width > this.minWidth && this.ctx.canvas.height > this.minHeight) {
             chrome.storage.local.set({'canvasWidth' : this.canvas.width - 100});
             chrome.storage.local.set({'canvasHeight' : this.canvas.height - 50});
             this.resize(); 
@@ -63,11 +72,11 @@ class WhiteBoard extends Component {
         let self = this;        
     
         chrome.storage.local.get('canvasWidth', function(item) {
-            self.onGetCanvasWidth(item['canvasWidth'] == null ? 400 : item['canvasWidth']);
+            self.onGetCanvasWidth(item['canvasWidth'] == null ? self.minWidth : item['canvasWidth']);
         });
         
         chrome.storage.local.get('canvasHeight', function(item) {
-            self.onGetCanvasHeight(item['canvasHeight'] == null ? 350 : item['canvasHeight']);
+            self.onGetCanvasHeight(item['canvasHeight'] == null ? self.minHeight : item['canvasHeight']);
         });
 
         chrome.storage.local.get('canvasState', function(item) {
@@ -86,7 +95,7 @@ class WhiteBoard extends Component {
         let image = new Image();
         image.src = item;
         image.onload = function () {
-            self.ctx.drawImage(image, 0, 0); //TODO: Look into what draw image takes. I think bug may be related to the resizing of the window.
+            self.ctx.drawImage(image, 0, 0); 
         }
     }
 
@@ -103,9 +112,7 @@ class WhiteBoard extends Component {
             document.addEventListener("mousemove", this.erase);
             this.reposition(event);
             this.erase(event);
-        }
-        
-        else {
+        } else {
             document.addEventListener("mousemove", this.draw);
             this.reposition(event);
             this.draw(event);
@@ -121,7 +128,8 @@ class WhiteBoard extends Component {
         this.coord.x = event.clientX - this.canvas.offsetLeft;
         this.coord.y = event.clientY - this.canvas.offsetTop;
     }
-
+    
+    //TODO: refactor draw/erase
     draw(event: any) {
         this.ctx.beginPath();
         this.ctx.strokeStyle = "black";
@@ -161,10 +169,7 @@ class WhiteBoard extends Component {
     }
 
     appendCurrentCanvasState(item: Array<String>) {
-        if(item == null) {
-            item = [];
-        }
-        
+        if(!item) item = []
         item.push(this.canvas.toDataURL());
         this.setLocalCanvasState(item);
     }
@@ -173,7 +178,7 @@ class WhiteBoard extends Component {
         var self = this;
         chrome.storage.local.get('canvasState', function(item) {
             self.popCanvasState(item['canvasState']);
-        })
+        });
     }
 
     popCanvasState(item: any) {
