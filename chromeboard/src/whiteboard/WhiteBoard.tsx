@@ -1,4 +1,4 @@
-import React, { Component, useEffect} from 'react';
+import { Component} from 'react';
 import './WhiteBoard.css'
 
 class WhiteBoard extends Component {
@@ -7,6 +7,10 @@ class WhiteBoard extends Component {
     coord = {x:0, y:0};
     paint = false;
     eraseFlag = false;
+    minHeight = 350;
+    maxHeight = 600;
+    minWidth = 400;
+    maxWidth = 800;    
 
     constructor(props: any) {
         super(props)
@@ -24,21 +28,32 @@ class WhiteBoard extends Component {
         this.increaseCanvasSize = this.increaseCanvasSize.bind(this);
         this.decreaseCanvasSize = this.decreaseCanvasSize.bind(this);
         this.saveState = this.saveState.bind(this);
+        this.undo = this.undo.bind(this);
+        this.appendCurrentCanvasState = this.appendCurrentCanvasState.bind(this);
     } 
 
     componentDidMount() {
+        var self = this;
         this.canvas = document.querySelector('.myCanvas') as HTMLCanvasElement;
         this.ctx = this.canvas.getContext('2d');
         
         document.addEventListener("mousedown", this.start);
+        
         document.addEventListener("mouseup", this.saveState);
+
         document.addEventListener("mouseup", this.stop);
-    
+
+        document.addEventListener("keydown", function(event) {
+            if((event.metaKey || event.ctrlKey) && event.key == 'z') {
+                self.undo();
+            }
+        });
+
         this.resize();
     }
 
     increaseCanvasSize() {
-        if(this.ctx.canvas.width < 800 && this.ctx.canvas.height < 600) {
+        if(this.ctx.canvas.width < this.maxWidth && this.ctx.canvas.height < this.maxHeight) {
             chrome.storage.local.set({'canvasWidth': this.ctx.canvas.width + 100});
             chrome.storage.local.set({'canvasHeight': this.ctx.canvas.height + 50});
             this.resize();
@@ -46,7 +61,7 @@ class WhiteBoard extends Component {
     }
     
     decreaseCanvasSize() {
-       if(this.ctx.canvas.width > 400 && this.ctx.canvas.height > 350) {
+       if(this.ctx.canvas.width > this.minWidth && this.ctx.canvas.height > this.minHeight) {
             chrome.storage.local.set({'canvasWidth' : this.canvas.width - 100});
             chrome.storage.local.set({'canvasHeight' : this.canvas.height - 50});
             this.resize(); 
@@ -57,28 +72,30 @@ class WhiteBoard extends Component {
         let self = this;        
     
         chrome.storage.local.get('canvasWidth', function(item) {
-            self.onGetCanvasWidth(item['canvasWidth'] == null ? 400 : item['canvasWidth']);
+            self.onGetCanvasWidth(item['canvasWidth'] == null ? self.minWidth : item['canvasWidth']);
         });
         
         chrome.storage.local.get('canvasHeight', function(item) {
-            self.onGetCanvasHeight(item['canvasHeight'] == null ? 350 : item['canvasHeight']);
+            self.onGetCanvasHeight(item['canvasHeight'] == null ? self.minHeight : item['canvasHeight']);
         });
 
         chrome.storage.local.get('canvasState', function(item) {
-            self.onGetCanvasState(item['canvasState']);
+            self.getCachedCanvas(item['canvasState']);
         });
+
     }
 
-    onGetCanvasState(item: any) {
+    getCachedCanvas(canvasStateArray: Array<String>) {
+        if(canvasStateArray == null) return;
+        this.drawNewCanvas(canvasStateArray[canvasStateArray.length-1])
+    }
+
+    drawNewCanvas(item: any) {
         let self = this;
-        console.log("Retrieving: " + item);
-        // window.open(item);
-        if(item == null) return;
-        
         let image = new Image();
         image.src = item;
         image.onload = function () {
-            self.ctx.drawImage(image, 0, 0); //TODO: Look into what draw image takes. I think bug may be related to the resizing of the window.
+            self.ctx.drawImage(image, 0, 0); 
         }
     }
 
@@ -95,9 +112,7 @@ class WhiteBoard extends Component {
             document.addEventListener("mousemove", this.erase);
             this.reposition(event);
             this.erase(event);
-        }
-        
-        else {
+        } else {
             document.addEventListener("mousemove", this.draw);
             this.reposition(event);
             this.draw(event);
@@ -108,12 +123,13 @@ class WhiteBoard extends Component {
         document.removeEventListener("mousemove", this.draw);
         document.removeEventListener("mousemove", this.erase);
     }
-    
+
     reposition(event: any):void {
         this.coord.x = event.clientX - this.canvas.offsetLeft;
         this.coord.y = event.clientY - this.canvas.offsetTop;
     }
-
+    
+    //TODO: refactor draw/erase
     draw(event: any) {
         this.ctx.beginPath();
         this.ctx.strokeStyle = "black";
@@ -146,13 +162,33 @@ class WhiteBoard extends Component {
     }
 
     saveState() {
-        chrome.storage.local.remove(["canvasState"],function() {
-            var error = chrome.runtime.lastError;
-               if (error) {
-                   console.error(error);
-               }
-           })
-        chrome.storage.local.set({'canvasState' : this.canvas.toDataURL()}); 
+        let self = this;
+        chrome.storage.local.get('canvasState', function(item) {
+            self.appendCurrentCanvasState(item['canvasState']);
+        });
+    }
+
+    appendCurrentCanvasState(item: Array<String>) {
+        if(!item) item = []
+        item.push(this.canvas.toDataURL());
+        this.setLocalCanvasState(item);
+    }
+
+    undo() {
+        var self = this;
+        chrome.storage.local.get('canvasState', function(item) {
+            self.popCanvasState(item['canvasState']);
+        });
+    }
+
+    popCanvasState(item: any) {
+      item.pop();
+      this.setLocalCanvasState(item);
+      this.resize()
+    }
+
+    setLocalCanvasState(item : Array<String>) {
+        chrome.storage.local.set({'canvasState' : item}); 
     }
 
     render() { 
