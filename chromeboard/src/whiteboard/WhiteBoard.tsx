@@ -1,6 +1,11 @@
 import { Component} from 'react';
 import './WhiteBoard.css'
 
+type WhiteboardState = {
+    showWriteSlider?: boolean;
+    writeLineThickness?: number;
+}
+
 class WhiteBoard extends Component {
     canvas = {} as HTMLCanvasElement;
     ctx = {} as any; //CanvasRenderingContext2D
@@ -11,6 +16,11 @@ class WhiteBoard extends Component {
     maxHeight = 600;
     minWidth = 400;
     maxWidth = 800;    
+    
+    state: WhiteboardState = {
+        showWriteSlider: true,
+        writeLineThickness: 1.5
+    }
 
     constructor(props: any) {
         super(props)
@@ -33,22 +43,35 @@ class WhiteBoard extends Component {
     } 
 
     componentDidMount() {
-        var self = this;
         this.canvas = document.querySelector('.myCanvas') as HTMLCanvasElement;
+        console.log("Canvas operational... " + this.canvas);
         this.ctx = this.canvas.getContext('2d');
-        
+        this.setUpTools();
+        this.setUpListeners();
+        this.resize();
+    }
+
+    setUpTools() {
+        let self = this;
+
+        chrome.storage.local.get('writeLineThickness', function(item) {
+            if(item != undefined && item != null && item['writeLineThickness'] != null) {
+                self.setState(state => ({writeLineThickness: item['writeLineThickness']})); 
+            }
+        });
+    }
+
+    setUpListeners() {
+        var self = this;
+
         document.addEventListener("mousedown", this.start);
-        
         document.addEventListener("mouseup", this.saveState);
-
         document.addEventListener("mouseup", this.stop);
-
         document.addEventListener("keydown", function(event) {
             if((event.metaKey || event.ctrlKey) && event.key == 'z') {
                 self.undo();
             }
         });
-
         this.resize();
     }
 
@@ -87,7 +110,7 @@ class WhiteBoard extends Component {
 
     getCachedCanvas(canvasStateArray: Array<String>) {
         if(canvasStateArray == null) return;
-        this.drawNewCanvas(canvasStateArray[canvasStateArray.length-1])
+        this.drawNewCanvas(canvasStateArray[canvasStateArray.length-1]);
     }
 
     drawNewCanvas(item: any) {
@@ -129,11 +152,10 @@ class WhiteBoard extends Component {
         this.coord.y = event.clientY - this.canvas.offsetTop;
     }
     
-    //TODO: refactor draw/erase
     draw(event: any) {
         this.ctx.beginPath();
         this.ctx.strokeStyle = "black";
-        this.ctx.lineWidth = 1.5;
+        this.ctx.lineWidth = this.state.writeLineThickness; 
         this.ctx.lineCap = "round";
         this.stroke(event) 
     }
@@ -169,7 +191,8 @@ class WhiteBoard extends Component {
     }
 
     appendCurrentCanvasState(item: Array<String>) {
-        if(!item) item = []
+        if(!item || item.length > 5) item = [];
+
         item.push(this.canvas.toDataURL());
         this.setLocalCanvasState(item);
     }
@@ -191,16 +214,22 @@ class WhiteBoard extends Component {
         chrome.storage.local.set({'canvasState' : item}); 
     }
 
+    sliderChange() {
+
+    }
+
     render() { 
+        const {showWriteSlider} = this.state;
+
         return <>
             <div className = "TaskBar">
                 <button className="canvasButton" onClick={this.increaseCanvasSize}>+</button>
                 <button className="canvasButton" onClick={this.decreaseCanvasSize}>-</button>
                 <button className="canvasButton" onClick={this.turnOnErase}>E</button>
                 <button className="canvasButton" onClick={this.turnOnWrite}>W</button>
+                {showWriteSlider && <input type="range" min="1" max="100" value="10" onChange={this.sliderChange} />}
             </div> 
-            <canvas className="myCanvas">
-            </canvas>
+            <canvas className="myCanvas"></canvas>
         </>
             
     }
